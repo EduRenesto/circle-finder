@@ -1,11 +1,15 @@
 #include <stdlib.h>
 
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <vector>
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+
+#define SCALE_FACTOR 0.2f
 
 cv::Mat src;
 cv::Mat gray;
@@ -14,6 +18,8 @@ cv::Mat dest;
 
 int lowThreshold;
 const int maxLowThreshold = 100;
+
+std::ofstream output;
 
 void CannyThreshold(int _a, void *_b) {
     cv::Mat detectedEdges;
@@ -25,7 +31,7 @@ void CannyThreshold(int _a, void *_b) {
     cv::findContours(detectedEdges, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 
     for(auto con : contours) {
-        if(cv::contourArea(con) < 10) continue;
+        if(cv::contourArea(con) < 100) continue;
         cv::Point2f center;
         float radius;
 
@@ -48,21 +54,29 @@ void CannyThreshold(int _a, void *_b) {
             }
         }
 
-        std::cout << nCenter << std::endl;
-
+//        std::cout << nCenter << std::endl;
         cv::circle(src, nCenter, maxDist, cv::Scalar(255, 0, 0));
         std::cout << "inscribed radius: " << maxDist << " circunscribed radius: "
            << radius << std::endl;
+
+        output << maxDist << "," << radius << std::endl;
     }
 
     dest = cv::Scalar::all(0);
 
     src.copyTo(dest, detectedEdges);
-    imshow("circles", src);
+//    imshow("circles", src);
 }
 
 int main(int argc, char* argv[]) {
-    cv::namedWindow("circles", cv::WINDOW_AUTOSIZE);
+    if(argc < 3) {
+        return -1;
+    }
+
+    output.open(argv[2], std::ios_base::trunc);
+    output << "Inscribed Radius,Circumscribed Radius" << std::endl;
+
+//    cv::namedWindow("circles", cv::WINDOW_AUTOSIZE);
 
     cv::Mat bigsrc = cv::imread(argv[1], cv::IMREAD_COLOR);
 
@@ -71,7 +85,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    cv::resize(bigsrc, src, cv::Size(), 0.5f, 0.5f);
+    cv::resize(bigsrc, src, cv::Size(), SCALE_FACTOR, SCALE_FACTOR);
 
     cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
 
@@ -79,7 +93,9 @@ int main(int argc, char* argv[]) {
 
     CannyThreshold(0, 0);
 
-    cv::waitKey();
+//    cv::waitKey();
+
+    output.close();
 
     return 0;
 }
