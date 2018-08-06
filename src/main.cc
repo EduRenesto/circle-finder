@@ -9,7 +9,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
-#define SCALE_FACTOR 0.2f
+#define SCALE_FACTOR 1
 
 cv::Mat src;
 cv::Mat gray;
@@ -44,6 +44,7 @@ void CannyThreshold(int _a, void *_b) {
         int maxDist = 0;
         cv::Point nCenter;
 
+        #pragma omp parallel for
         for(int i = 0; i < detectedEdges.cols; i++) {
             for(int j = 0; j < detectedEdges.rows; j++) {
                 dist = cv::pointPolygonTest(con, cv::Point(i, j), true);
